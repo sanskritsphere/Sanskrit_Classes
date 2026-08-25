@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>संस्कृत कक्षा - होमवर्क अपलोड</title>
+  
+  <!-- PWA App Meta Tags (ऐप जैसा लुक देने के लिए) -->
+  <meta name="theme-color" content="#2b6cb0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="संस्कृत गृहकार्य">
+  
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+    .card { background: #ffffff; width: 100%; max-width: 480px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); padding: 30px 25px; }
+    .header { text-align: center; margin-bottom: 25px; }
+    .header h2 { color: #1a365d; font-size: 24px; margin-bottom: 8px; }
+    .header p { color: #4a5568; font-size: 14px; }
+    
+    /* Install App Banner Button */
+    .install-btn { display: none; width: 100%; padding: 10px; background-color: #ed8936; color: white; font-weight: bold; border: none; border-radius: 8px; margin-bottom: 15px; cursor: pointer; text-align: center; }
+    
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-weight: 600; color: #2d3748; margin-bottom: 8px; font-size: 14px; }
+    select, input[type="date"], input[type="file"] { width: 100%; padding: 12px 14px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 15px; color: #2d3748; background-color: #f8fafc; }
+    select:focus, input[type="date"]:focus, input[type="file"]:focus { outline: none; border-color: #3182ce; background-color: #ffffff; }
+    .btn-submit { width: 100%; padding: 14px; background-color: #2b6cb0; color: #ffffff; font-size: 16px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(43, 108, 176, 0.2); }
+    .btn-submit:disabled { background-color: #a0aec0; cursor: not-allowed; }
+    #status { margin-top: 20px; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; display: none; }
+    .status-success { background-color: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; }
+    .status-error { background-color: #fed7d7; color: #742a2a; border: 1px solid #feb2b2; }
+    .status-loading { background-color: #e2e8f0; color: #2d3748; border: 1px solid #cbd5e0; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <!-- ऐप डाउनलोड बटन (फोन पर अपने आप दिखेगा) -->
+  <button id="installBtn" class="install-btn">📲 मोबाइल ऐप डाउनलोड/इंस्टॉल करें</button>
+
+  <div class="header">
+    <h2>🚩 संस्कृत कक्षा गृहकार्य</h2>
+    <p>कृपया अपना नाम, दिनांक और फाइल चुनकर अपलोड करें</p>
+  </div>
+
+  <form id="uploadForm">
+    <div class="form-group">
+      <label for="studentName">छात्र का नाम (Student Name):</label>
+      <select id="studentName" required>
+        <option value="">-- नाम चुनें --</option>
+        <option value="अमित शर्मा">अमित शर्मा</option>
+        <option value="राहुल वर्मा">राहुल वर्मा</option>
+        <option value="प्रिया सिंह">प्रिया सिंह</option>
+        <option value="पूजा पटेल">पूजा पटेल</option>
+        <option value="विकास कुमार">विकास कुमार</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="selectedDate">दिनांक (Date):</label>
+      <input type="date" id="selectedDate" required>
+    </div>
+
+    <div class="form-group">
+      <label for="fileInput">गृहकार्य फाइल / फोटो (PDF or Image):</label>
+      <input type="file" id="fileInput" accept="image/*,application/pdf" required>
+    </div>
+
+    <button type="button" id="submitBtn" class="btn-submit" onclick="submitForm()">गृहकार्य जमा करें</button>
+  </form>
+
+  <div id="status"></div>
+</div>
+
+<script>
+  // आज की तारीख ऑटो-सेट करना
+  document.addEventListener('DOMContentLoaded', function() {
+    var today = new Date().toISOString().substring(0, 10);
+    document.getElementById('selectedDate').value = today;
+  });
+
+  // ऐप डाउनलोड (Install Prompt) लॉजिक
+  let deferredPrompt;
+  const installBtn = document.getElementById('installBtn');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'block'; // बटन दिखाएं
+  });
+
+  installBtn.addEventListener('click', () => {
+    installBtn.style.display = 'none';
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        deferredPrompt = null;
+      });
+    }
+  });
+
+  function submitForm() {
+    var studentName = document.getElementById('studentName').value;
+    var selectedDate = document.getElementById('selectedDate').value;
+    var fileInput = document.getElementById('fileInput').files[0];
+    var statusDiv = document.getElementById('status');
+    var submitBtn = document.getElementById('submitBtn');
+
+    if (!studentName || !selectedDate || !fileInput) {
+      showStatus("कृपया सभी जानकारी भरें!", "error");
+      return;
+    }
+
+    showStatus("⏳ फाइल अपलोड हो रही है, कृपया प्रतीक्षा करें...", "loading");
+    submitBtn.disabled = true;
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var fileData = e.target.result.split(',')[1];
+      var data = {
+        studentName: studentName,
+        selectedDate: selectedDate,
+        fileName: fileInput.name,
+        mimeType: fileInput.type,
+        fileData: fileData
+      };
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(function(response) {
+            submitBtn.disabled = false;
+            if (response.success) {
+              showStatus(response.message, "success");
+              document.getElementById('uploadForm').reset();
+              document.getElementById('selectedDate').value = new Date().toISOString().substring(0, 10);
+            } else {
+              showStatus(response.message, "error");
+            }
+          })
+          .withFailureHandler(function(err) {
+            submitBtn.disabled = false;
+            showStatus("त्रुटि: " + err.message, "error");
+          })
+          .uploadFileToDrive(data);
+      }
+    };
+
+    reader.readAsDataURL(fileInput);
+  }
+
+  function showStatus(msg, type) {
+    var statusDiv = document.getElementById('status');
+    statusDiv.style.display = 'block';
+    statusDiv.className = '';
+    
+    if (type === 'success') {
+      statusDiv.classList.add('status-success');
+    } else if (type === 'error') {
+      statusDiv.classList.add('status-error');
+    } else {
+      statusDiv.classList.add('status-loading');
+    }
+    
+    statusDiv.innerHTML = msg;
+  }
+</script>
+
+</body>
+</html>
